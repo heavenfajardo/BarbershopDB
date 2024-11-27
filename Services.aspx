@@ -5,7 +5,7 @@
 <head runat="server">
     <title>Services - Ford's Barber Shop</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
+     <style>
     body {
         margin: 0;
         font-family: Arial, sans-serif;
@@ -15,13 +15,36 @@
         background-attachment: fixed;
     }
 
-    .container {
-        max-width: 900px;
-        margin-top: 50px;
-        background-color: rgba(255, 255, 255, 0.9);
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    .container, .appointment-container, .guest-info-container {
+    max-width: 900px; /* Same width for all containers */
+    margin: 50px auto;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+
+    }
+
+    .overlay {
+    display: none; /* Initially hidden */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* On top of other content */
+    }
+
+    .appointment-container h2, .guest-info-container h3 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .overlay.show {
+        display: flex; /* Show overlay when class is added */
     }
 
     .header {
@@ -80,27 +103,16 @@
         text-align: center;
     }
 
-    .appointment-overlay, .guest-info-container {
+      .appointment-overlay {
         display: none;
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 9999;
+        background-color: rgba(0, 0, 0, 0.5);
         justify-content: center;
         align-items: center;
-        overflow: auto;
-    }
-
-    .appointment-container, .guest-info-container {
-        background-color: rgba(255, 255, 255, 0.9);
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        display: flex;
-        flex-direction: row;
     }
 
     .close-btn {
@@ -115,31 +127,43 @@
         cursor: pointer;
     }
 
-    .book-now-btn {
-        background-color: #8B4513;
-        color: white;
-        padding: 15px 30px;
-        text-align: center;
-        border-radius: 5px;
-        cursor: pointer;
-        border: none;
-    }
-
-    .guest-info-container input {
-        width: 100%;
-        margin-bottom: 15px;
-    }
-
-    .guest-info-container button {
-        width: 100%;
+   .book-now-btn {
         background-color: #8B4513;
         color: white;
         padding: 15px;
         border: none;
         border-radius: 5px;
         cursor: pointer;
+        font-size: 18px;
+        width: 100%;
     }
 
+   #bookNowPrice {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+   .guest-info-container input {
+    width: calc(100% - 20px); /* Leave some margin on the sides */
+    margin-bottom: 15px; /* Space between inputs */
+    padding: 10px; /* Comfortable input padding */
+    font-size: 16px; /* Improve readability */
+    border: 1px solid #ccc; /* Border for visual structure */
+    border-radius: 5px; /* Rounded corners for better aesthetics */
+    box-sizing: border-box; /* Ensure padding doesn’t affect width */
+}
+  .guest-info-container button {
+        width: 100%; /* Buttons take the full width */
+        background-color: #8B4513; /* Match the theme */
+        color: white;
+        padding: 15px; /* Comfortable click area */
+        margin-top: 10px; /* Space between buttons */
+        border: none;
+        border-radius: 5px; /* Rounded corners */
+        font-size: 18px; /* Matching style */
+        cursor: pointer;
+    }
+ 
     #barberList {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -165,6 +189,11 @@
         margin-top: 8px;
         font-weight: bold;
     }
+
+    .appointment-overlay.show {
+        display: flex;
+    }
+
 
     #barberSelectionOverlay {
         display: none;
@@ -202,15 +231,44 @@
         margin-top: 20px;
     }
 
-     .guest-info-container {
-        display: none;
-        flex-direction: column;
-        gap: 15px;
-        width: 100%;
+   .guest-info-container {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        width: 90%;
+        max-width: 600px; 
+        text-align: center;
+        box-sizing: border-box; 
     }
 
     .guest-info-container input {
         width: 100%;
+    }
+
+    .appointment-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+    }
+
+   #guestInfoOverlay {
+        display: none; /* Initially hidden */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
+        justify-content: center;
+        align-items: center;
+        z-index: 9999; /* Ensure it stays on top */
+    }
+
+
+    #guestInfoOverlay.show {
+        display: flex; /* Show the overlay when the "show" class is added */
     }
 </style>
 </head>
@@ -228,7 +286,7 @@
         </div>
     </header>
 
-  <div class="container" style="margin-top: 100px;">
+    <div class="container" style="margin-top: 100px;">
         <div class="services-section">
             <h2 class="text-center text-primary mb-4">Services</h2>
             <form id="servicesForm">
@@ -280,57 +338,57 @@
                         </div>
                     </div>
                 </div>
-
             </form>
-            <div class="text-center next-button">
-                <button type="button" class="btn btn-primary" onclick="showAppointmentContainer()">Next</button>
-            </div>
+           <div class="text-center next-button">
+            <button type="button" class="btn btn-primary" onclick="showAppointmentContainer()">Next</button>
+        </div>
         </div>
     </div>
 
-  
-    <div class="appointment-overlay" id="appointmentOverlay">
-        <div class="appointment-container">
-            <button class="close-btn" onclick="closeAppointmentContainer()">X</button>
-            <div class="left-side">
-                <h2>Book Your Appointment</h2>
-                <form id="appointmentForm">
-                    <label for="date">Appointment Date</label>
-                    <input type="date" id="appointmentDate" class="form-control" required />
-                    <label for="time" class="mt-3">Appointment Time</label>
-                    <input type="time" id="appointmentTime" class="form-control" required />
-                    <label for="barber" class="mt-3">Preferred Barber</label>
-                    <input type="text" id="preferredBarber" class="form-control" readonly onclick="openBarberSelection()" placeholder="Select Barber" />
-                    <div class="total-price">
-                        <p><strong>Total Price: </strong><span id="totalPrice">₱0.00</span></p>
-                    </div>
-                </form>
-                <div class="appointment-footer">
-                    <button class="book-now-btn" onclick="showGuestInfoContainer()">Book Now</button>
-                </div>
-            </div>
+<div class="appointment-overlay" id="appointmentOverlay">
+    <div class="appointment-container">
+        <button class="close-btn" onclick="closeAppointmentContainer()">X</button>
+        <div class="left-side">
+            <h2>Book Your Appointment</h2>
+            <form id="appointmentForm">
+                <div id="serviceSummaryContainer"></div>
+                
+                <label for="date">Appointment Date</label>
+                <input type="date" id="appointmentDate" class="form-control" required />
+
+                <label for="time" class="mt-3">Appointment Time</label>
+                <input type="time" id="appointmentTime" class="form-control" required />
+
+                <label for="barber" class="mt-3">Preferred Barber</label>
+                <input type="text" id="preferredBarber" class="form-control" readonly onclick="openBarberSelection()" placeholder="Select Barber" />
+                
+                <label for="book-now" class="mt-3"> </label>
+              <input type="button" class="book-now-btn" id="bookNowButton" value="Book Now ₱0.00" onclick="showGuestInfoContainer()" />
+            </form>
+        </div>
+
         </div>
     </div>
+</div>
 
-    <div class="appointment-overlay" id="guestInfoOverlay">
+    
+
+            <div class="overlay" id="guestInfoOverlay">
         <div class="guest-info-container">
-            <h2>Guest Information</h2>
-            <form id="guestInfoForm">
-                <label for="firstName">First Name</label>
-                <input type="text" id="firstName" class="form-control" required />
-                
-                <label for="lastName">Last Name</label>
-                <input type="text" id="lastName" class="form-control" required />
-                
-                <label for="email">Email</label>
-                <input type="email" id="email" class="form-control" required />
-
-                <button type="button" class="book-now-btn" onclick="submitGuestInfo()">Submit</button>
-            </form>
+            <h3>Guest Information</h3>
+            <label for="firstName">First Name:</label>
+            <input type="text" id="firstName" class="form-control">
+            <label for="lastName">Last Name:</label>
+            <input type="text" id="lastName" class="form-control">
+            <label for="email">Email:</label>
+            <input type="email" id="email" class="form-control">
+            <button onclick="submitGuestInfo()">Submit</button>
+            <button onclick="closeGuestInfoContainer()">Close</button>
         </div>
     </div>
 
-    <!-- Barber Selection Overlay -->
+
+
     <div class="appointment-overlay" id="barberSelectionOverlay">
         <div class="appointment-container">
             <button class="close-btn" onclick="closeBarberSelection()">X</button>
@@ -338,82 +396,121 @@
             <div id="barberList"></div>
         </div>
     </div>
+</body>
 
-    <script>
-        let selectedServices = [];
-        function updateSummary() {
-            selectedServices = [];
-            const services = document.querySelectorAll('input[name="service"]:checked');
-            let total = 0;
-            let summary = "<h3>Summary</h3>";
-            services.forEach((service) => {
-                const label = service.nextElementSibling.querySelector("span").textContent;
-                const value = service.value;
-                summary += `<p>${label}: ₱${value}</p>`;
-                selectedServices.push(label);
-                total += parseFloat(value);
-            });
-            document.getElementById("totalPrice").textContent = `₱${total}`;
-            document.getElementById("summaryList").innerHTML = summary;
-        }
+<script>
+    const appointmentDateInput = document.getElementById("appointmentDate");
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const yyyy = tomorrow.getFullYear();
+    const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const dd = String(tomorrow.getDate()).padStart(2, '0');
+    appointmentDateInput.min = `${yyyy}-${mm}-${dd}`;
 
-        function showAppointmentContainer() {
-            document.getElementById("appointmentOverlay").style.display = "flex";
-        }
+    let selectedServices = [];  // Holds selected services
+    function updateSummary() {
+        selectedServices = [];  // Clear previous selections
+        const services = document.querySelectorAll('input[name="service"]:checked');  // Get checked services
+        let total = 0;
+        let summary = "";  // Remove the "Selected Services:" heading
 
-        function closeAppointmentContainer() {
-            document.getElementById("appointmentOverlay").style.display = "none";
-        }
+        // Loop through selected services to create a list and calculate total
+        services.forEach((service) => {
+            const label = service.parentElement;
+            const serviceName = label.querySelector("span:first-of-type").innerText;
+            const servicePrice = parseFloat(service.value);
 
-        function showGuestInfoContainer() {
-            document.getElementById("guestInfoOverlay").style.display = "flex";
-        }
+            selectedServices.push({ name: serviceName, price: servicePrice });  // Add to selected services array
+            total += servicePrice;
 
-        function submitGuestInfo() {
-            const firstName = document.getElementById("firstName").value;
-            const lastName = document.getElementById("lastName").value;
-            const email = document.getElementById("email").value;
-            if (!firstName || !lastName || !email) {
-                alert("Please fill in all the guest information!");
-                return;
-            }
-            alert(`Appointment booked successfully for ${firstName} ${lastName} with email ${email}.`);
-            closeGuestInfoContainer();
-        }
+            summary += `<p>${serviceName} - ₱${servicePrice.toFixed(2)}</p>`;  // Append service name and price to summary
+        });
 
-        function closeGuestInfoContainer() {
-            document.getElementById("guestInfoOverlay").style.display = "none";
-        }
+        // Update the summary section before the appointment date section
+        const summaryDiv = document.createElement("div");
+        summaryDiv.innerHTML = summary;
+        const serviceSummaryContainer = document.getElementById("serviceSummaryContainer");
 
-        function openBarberSelection() {
-            document.getElementById("barberSelectionOverlay").style.display = "flex";
-            const barbers = [
-                { id: 1, name: "No Preferences", image: "Images/blue.jpg" },
-                { id: 2, name: "Ian", image: "Images/ian.png" },
-                { id: 3, name: "Heaven", image: "Images/heaven.png" },
-                { id: 4, name: "Shanelle", image: "Images/shanel.png" },
-                { id: 5, name: "Erick", image: "Images/oyao.png" },
-                { id: 6, name: "Titus", image: "Images/titus.png" },
-            ];
-            let content = "";
-            barbers.forEach((barber) => {
-                content += `
-                <div class="text-center">
-                    <img src="${barber.image}" alt="${barber.name}" onclick="selectBarber('${barber.name}')" />
-                    <p>${barber.name}</p>
-                </div>`;
-            });
-            document.getElementById("barberList").innerHTML = content;
-        }
+        // Clear existing summary and append new summary
+        serviceSummaryContainer.innerHTML = ''; // Clear existing summary
+        serviceSummaryContainer.appendChild(summaryDiv); // Display updated summary
 
-        function closeBarberSelection() {
-            document.getElementById("barberSelectionOverlay").style.display = "none";
-        }
+        // Update the "Book Now" button text dynamically with the total price
+        const bookNowButton = document.getElementById("bookNowButton");
+        bookNowButton.value = `Book Now   ₱${total.toFixed(2)}`;
+    }
 
-        function selectBarber(barberName) {
-            document.getElementById("preferredBarber").value = barberName;
-            closeBarberSelection();
+
+    // Call updateSummary whenever a service is selected or unselected
+    document.querySelectorAll('input[name="service"]').forEach((checkbox) => {
+        checkbox.addEventListener('change', updateSummary);  // Update summary on change
+    });
+
+    function showAppointmentContainer() {
+        document.getElementById("appointmentOverlay").style.display = "flex";
+    
+    }
+
+    function closeAppointmentContainer() {
+        const overlay = document.getElementById("appointmentOverlay");
+        overlay.classList.remove('show');
+    }
+
+    function showGuestInfoContainer() {
+        const overlay = document.getElementById("guestInfoOverlay");
+        overlay.classList.add('show');  // Ensure the overlay is visible
+    }
+
+    function submitGuestInfo() {
+        const firstName = document.getElementById("firstName").value;
+        const lastName = document.getElementById("lastName").value;
+        const email = document.getElementById("email").value;
+        if (!firstName || !lastName || !email) {
+            alert("Please fill in all the guest information!");
+            return;
         }
-    </script>
+        alert(`Appointment booked successfully for ${firstName} ${lastName} with email ${email}.`);
+        window.location.href = "Default.aspx";
+    }
+
+    function closeGuestInfoContainer() {
+        const overlay = document.getElementById("guestInfoOverlay");
+        overlay.classList.remove('show');  // Close the overlay
+    }
+
+    const bookNowButton = document.getElementById("bookNowButton");
+    bookNowButton.addEventListener('click', showGuestInfoContainer); 
+
+    function openBarberSelection() {
+        document.getElementById("barberSelectionOverlay").style.display = "flex";
+        const barbers = [
+            { id: 1, name: "No Preferences", image: "Images/blue.jpg" },
+            { id: 2, name: "Ian", image: "Images/ian.png" },
+            { id: 3, name: "Heaven", image: "Images/heaven.png" },
+            { id: 4, name: "Shanelle", image: "Images/shanel.png" },
+            { id: 5, name: "Erick", image: "Images/oyao.png" },
+            { id: 6, name: "Titus", image: "Images/titus.png" },
+        ];
+        let content = "";
+        barbers.forEach((barber) => {
+            content += `
+        <div class="text-center">
+            <img src="${barber.image}" alt="${barber.name}" onclick="selectBarber('${barber.name}')" />
+            <p>${barber.name}</p>
+        </div>`;
+        });
+        document.getElementById("barberList").innerHTML = content;
+    }
+
+    function selectBarber(barberName) {
+        document.getElementById("preferredBarber").value = barberName;
+        closeBarberSelection();
+    }
+
+    function closeBarberSelection() {
+        document.getElementById("barberSelectionOverlay").style.display = "none";
+    }
+</script>
 </body>
 </html>

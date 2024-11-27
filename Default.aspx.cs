@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.UI;
-using System.Web.UI.WebControls;
+using barbershop.App_Code;
 
 namespace barbershop
 {
@@ -11,7 +8,8 @@ namespace barbershop
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-
+            DatabaseHelper dbHelper = new DatabaseHelper();
+            dbHelper.InsertBarbersAndServices();
         }
     }
 }
