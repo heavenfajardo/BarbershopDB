@@ -1,17 +1,12 @@
 ﻿<%@ Page Title="Home Page" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Default.aspx.cs" Inherits="barbershop._Default" %>
 
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
-
-    <!-- updated -->
+    <!-- Header Section -->
     <header style="background-color: #8B4513; padding: 15px 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"> 
-
-          
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <div style="display: flex; align-items: center; gap: 15px;">
                 <h1 style="margin: 0; font-size: 24px; color: #fff;">Ford's Barber Shop</h1>
             </div>
-
-          
             <div style="display: flex; align-items: center; gap: 20px;">
                 <a href="Default.aspx" style="text-decoration: none; color: #fff;">Home</a>
                 <a href="About.aspx" style="text-decoration: none; color: #fff;">About</a>
@@ -22,12 +17,10 @@
         </div>
     </header>
 
-   
+    <!-- Logo Section -->
     <div class="logo-section" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-     
         <div class="additional-menu" style="display: flex; align-items: center; gap: 20px;">
             <img src="Images/br.logof-modified.png" alt="Logo" style="width: 60px; height: 60px;" />
-
             <ul style="list-style: none; padding: 0; margin: 0; display: flex; gap: 20px;">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="openingHourDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -52,7 +45,7 @@
         </div>
     </div>
 
-  
+    <!-- Main Content Section -->
     <main style="background: url('Images/bg_blrd.jpg') no-repeat center center; background-size: cover; padding: 50px; text-align: center; display: flex; justify-content: center; align-items: center; height: 100vh; box-sizing: border-box;">
         <section style="background-color: rgba(255, 255, 255, 0.8); padding: 20px; border-radius: 10px; max-width: 600px; width: 100%; text-align: center;">
             <h2 style="color: #8B4513; font-size: 2rem; margin-bottom: 15px;">Bring Back Good Looks!</h2>
@@ -64,8 +57,7 @@
         </section>
     </main>
 
- 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
-
 </asp:Content>
