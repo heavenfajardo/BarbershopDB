@@ -336,21 +336,18 @@
             const firstName = document.getElementById("firstName").value.trim();
             const lastName = document.getElementById("lastName").value.trim();
             const email = document.getElementById("email").value.trim();
+
             if (!firstName || !lastName || !email) {
                 alert("Please fill in all fields.");
                 return;
             }
-            const requestData = {
-                firstName,
-                lastName,
-                email,
-            };
+
             fetch("Services.aspx/SaveGuestInfo", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(requestData),
+                body: JSON.stringify({ firstName, lastName, email }),
             })
                 .then((response) => {
                     if (!response.ok) {
@@ -370,6 +367,7 @@
                     alert("An error occurred: " + error.message);
                 });
         }
+
         function closeSuccessPopup() {
             document.getElementById("successPopup").style.display = "none";
             window.location.href = "Services.aspx";
