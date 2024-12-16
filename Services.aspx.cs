@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.SqlClient;
 using System.Web.Services;
 using System.Configuration;
@@ -9,113 +10,54 @@ namespace barbershop
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            // Initialization logic (if required)
         }
 
         [WebMethod]
-        public static string SaveAppointment(
-            string firstName,
-            string lastName,
-            string email,
-            string selectedServices,
-            string appointmentDate,
-            string appointmentTime,
-            string barberName)
+        public static string SaveAppointment(string firstName, string lastName, string email, string selectedServices, string appointmentDate, string appointmentTime, string barberName)
         {
-            try
+            string connectionString = ConfigurationManager.ConnectionStrings["BarberShopConnectionString"].ToString();
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                // Parse appointment date and time
-                DateTime appDateTime = DateTime.Parse($"{appointmentDate} {appointmentTime}");
-
-                // Connection string from web.config
-                string connectionString = ConfigurationManager.ConnectionStrings["BarberAppointmentDB"].ConnectionString;
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                try
                 {
-                    connection.Open();
+                    conn.Open();
 
-                    // Insert customer into CUSTOMER table if not exists
-                    string insertCustomerQuery = @"
-                        IF NOT EXISTS (SELECT 1 FROM CUSTOMER WHERE CUS_EMAIL = @Email)
-                        BEGIN
-                            INSERT INTO CUSTOMER (CUS_FIRSTNAME, CUS_LASTNAME, CUS_EMAIL)
-                            VALUES (@FirstName, @LastName, @Email)
-                        END";
+                    // INSERT query with default values for missing fields
+                    string query = @"INSERT INTO Appointments 
+                             (FirstName, LastName, Email, SelectedServices, AppointmentDate, AppointmentTime, BarberName) 
+                             VALUES (@FirstName, @LastName, @Email, 
+                                     ISNULL(@SelectedServices, 'N/A'), 
+                                     ISNULL(@AppointmentDate, '1900-01-01'), 
+                                     ISNULL(@AppointmentTime, '00:00:00'), 
+                                     ISNULL(@BarberName, 'N/A'))";
 
-                    using (SqlCommand cmd = new SqlCommand(insertCustomerQuery, connection))
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@FirstName", firstName);
                         cmd.Parameters.AddWithValue("@LastName", lastName);
                         cmd.Parameters.AddWithValue("@Email", email);
-                        cmd.ExecuteNonQuery();
-                    }
+                        cmd.Parameters.AddWithValue("@SelectedServices", string.IsNullOrEmpty(selectedServices) ? (object)DBNull.Value : selectedServices);
+                        cmd.Parameters.AddWithValue("@AppointmentDate", string.IsNullOrEmpty(appointmentDate) ? (object)DBNull.Value : DateTime.Parse(appointmentDate));
+                        cmd.Parameters.AddWithValue("@AppointmentTime", string.IsNullOrEmpty(appointmentTime) ? (object)DBNull.Value : TimeSpan.Parse(appointmentTime));
+                        cmd.Parameters.AddWithValue("@BarberName", string.IsNullOrEmpty(barberName) ? (object)DBNull.Value : barberName);
 
-                    // Retrieve customer ID
-                    string getCustomerIdQuery = "SELECT CUS_ID FROM CUSTOMER WHERE CUS_EMAIL = @Email";
-                    int customerId;
-                    using (SqlCommand cmd = new SqlCommand(getCustomerIdQuery, connection))
-                    {
-                        cmd.Parameters.AddWithValue("@Email", email);
-                        customerId = (int)cmd.ExecuteScalar();
-                    }
+                        int rowsAffected = cmd.ExecuteNonQuery();
 
-                    // Retrieve barber ID (if selected)
-                    int? barberId = null;
-                    if (!string.IsNullOrEmpty(barberName) && barberName != "No Preferences")
-                    {
-                        string getBarberIdQuery = "SELECT BAR_ID FROM BARBER WHERE BAR_FULLNAME = @BarberName";
-                        using (SqlCommand cmd = new SqlCommand(getBarberIdQuery, connection))
+                        if (rowsAffected > 0)
                         {
-                            cmd.Parameters.AddWithValue("@BarberName", barberName);
-                            object result = cmd.ExecuteScalar();
-                            if (result != null)
-                            {
-                                barberId = (int)result;
-                            }
+                            return "Appointment saved successfully!";
                         }
-                    }
-
-                    // Split selected services
-                    string[] services = selectedServices.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-                    // Insert appointments for each selected service
-                    foreach (var serviceName in services)
-                    {
-                        string getServiceIdQuery = "SELECT SER_ID FROM [SERVICE] WHERE SER_NAME = @ServiceName";
-                        int serviceId;
-
-                        using (SqlCommand cmd = new SqlCommand(getServiceIdQuery, connection))
+                        else
                         {
-                            cmd.Parameters.AddWithValue("@ServiceName", serviceName.Trim());
-                            object result = cmd.ExecuteScalar();
-                            if (result == null)
-                            {
-                                throw new Exception($"Service '{serviceName}' not found in the database.");
-                            }
-                            serviceId = (int)result;
-                        }
-
-                        // Insert into APPOINTMENT table
-                        string insertAppointmentQuery = @"
-                            INSERT INTO APPOINTMENT (CUS_ID, APP_DATE, BAR_ID, SER_ID, STATUS_ID)
-                            VALUES (@CustomerId, @AppDateTime, @BarberId, @ServiceId, 1)";
-
-                        using (SqlCommand cmd = new SqlCommand(insertAppointmentQuery, connection))
-                        {
-                            cmd.Parameters.AddWithValue("@CustomerId", customerId);
-                            cmd.Parameters.AddWithValue("@AppDateTime", appDateTime);
-                            cmd.Parameters.AddWithValue("@BarberId", (object)barberId ?? DBNull.Value);
-                            cmd.Parameters.AddWithValue("@ServiceId", serviceId);
-                            cmd.ExecuteNonQuery();
+                            return "Failed to save appointment.";
                         }
                     }
                 }
-
-                return "Appointment saved successfully!";
-            }
-            catch (Exception ex)
-            {
-                return $"Error saving appointment: {ex.Message}";
+                catch (Exception ex)
+                {
+                    return "Error: " + ex.Message;
+                }
             }
         }
     }

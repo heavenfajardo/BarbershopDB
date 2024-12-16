@@ -295,9 +295,10 @@
         const dd = String(tomorrow.getDate()).padStart(2, '0');
         appointmentDateInput.min = `${yyyy}-${mm}-${dd}`;
 
-        let selectedServices = [];
+        let selectedServices = []; // Global array to store selected services
+
         function updateSummary() {
-            selectedServices = [];
+            selectedServices = []; // Reset array
             const services = document.querySelectorAll('input[name="service"]:checked');
             let total = 0;
             let summary = "";
@@ -305,18 +306,23 @@
                 const label = service.parentElement;
                 const serviceName = label.querySelector("span:first-of-type").innerText;
                 const servicePrice = parseFloat(service.value);
+
+                // Push service details to the global array
                 selectedServices.push({ name: serviceName, price: servicePrice });
                 total += servicePrice;
+
                 summary += `<p>${serviceName} - ₱${servicePrice.toFixed(2)}</p>`;
             });
-            const summaryDiv = document.createElement("div");
-            summaryDiv.innerHTML = summary;
+
+            // Update the summary container
             const serviceSummaryContainer = document.getElementById("serviceSummaryContainer");
-            serviceSummaryContainer.innerHTML = '';
-            serviceSummaryContainer.appendChild(summaryDiv);
+            serviceSummaryContainer.innerHTML = summary;
+
+            // Update the button price
             const bookNowButton = document.getElementById("bookNowButton");
-            bookNowButton.value = `Book Now   ₱${total.toFixed(2)}`;
+            bookNowButton.value = `Book Now ₱${total.toFixed(2)}`;
         }
+
         document.querySelectorAll('input[name="service"]').forEach((checkbox) => {
             checkbox.addEventListener('change', updateSummary);
         });
@@ -324,14 +330,19 @@
         function showAppointmentContainer() {
             document.getElementById("appointmentOverlay").style.display = "flex";
         }
+
         function closeAppointmentContainer() {
-            const overlay = document.getElementById("appointmentOverlay");
-            overlay.classList.remove('show');
+            document.getElementById("appointmentOverlay").style.display = "none";
         }
+
         function showGuestInfoContainer() {
-            const overlay = document.getElementById("guestInfoOverlay");
-            overlay.classList.add('show');
+            document.getElementById("guestInfoOverlay").classList.add('show');
         }
+
+        function closeGuestInfoContainer() {
+            document.getElementById("guestInfoOverlay").classList.remove('show');
+        }
+
         function submitGuestInfo() {
             const firstName = document.getElementById("firstName").value.trim();
             const lastName = document.getElementById("lastName").value.trim();
@@ -342,42 +353,40 @@
                 return;
             }
 
-            fetch("Services.aspx/SaveGuestInfo", {
+            // Prepare the payload
+            const payload = {
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                selectedServices: "N/A", // Default value if no services are selected
+                appointmentDate: "1900-01-01", // Dummy date
+                appointmentTime: "00:00:00", // Dummy time
+                barberName: "N/A" // Default barber name
+            };
+
+            // Post the data to the backend
+            fetch("Services.aspx/SaveAppointment", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ firstName, lastName, email }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
             })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.json();
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.d || "Appointment saved successfully!");
+                    document.getElementById("guestInfoOverlay").classList.remove('show');
                 })
-                .then((data) => {
-                    if (data.success) {
-                        document.getElementById("successPopup").style.display = "flex";
-                    } else {
-                        alert("Error: " + data.message);
-                    }
-                })
-                .catch((error) => {
+                .catch(error => {
                     console.error("Error occurred:", error);
                     alert("An error occurred: " + error.message);
                 });
         }
 
+
+
         function closeSuccessPopup() {
             document.getElementById("successPopup").style.display = "none";
             window.location.href = "Services.aspx";
         }
-        function closeGuestInfoContainer() {
-            const overlay = document.getElementById("guestInfoOverlay");
-            overlay.classList.remove('show');
-        }
-        const bookNowButton = document.getElementById("bookNowButton");
-        bookNowButton.addEventListener('click', showGuestInfoContainer);
 
         function openBarberSelection() {
             document.getElementById("barberSelectionOverlay").style.display = "flex";
@@ -389,23 +398,27 @@
                 { id: 5, name: "Erick", image: "Images/oyao.png" },
                 { id: 6, name: "Titus", image: "Images/titus.png" },
             ];
+
             let content = "";
-            barbers.forEach((barber) => {
+            barbers.forEach(barber => {
                 content += `
-                    <div class="text-center">
-                        <img src="${barber.image}" alt="${barber.name}" onclick="selectBarber('${barber.name}')" />
-                        <p>${barber.name}</p>
-                    </div>`;
+            <div class="text-center">
+                <img src="${barber.image}" alt="${barber.name}" onclick="selectBarber('${barber.name}')">
+                <p>${barber.name}</p>
+            </div>`;
             });
             document.getElementById("barberList").innerHTML = content;
         }
+
         function selectBarber(barberName) {
             document.getElementById("preferredBarber").value = barberName;
             closeBarberSelection();
         }
+
         function closeBarberSelection() {
             document.getElementById("barberSelectionOverlay").style.display = "none";
         }
+
     </script>
 </body>
 </html>
